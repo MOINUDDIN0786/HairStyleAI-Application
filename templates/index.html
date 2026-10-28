@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#6c4cf1"><meta name="mobile-web-app-capable" content="yes">
+<title>HairStyle AI</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:#f4f5fa;color:#1d1d2b}
+header{background:#6c4cf1;color:#fff;padding:18px;text-align:center}header h1{margin:0;font-size:22px}header p{margin:4px 0 0;font-size:13px;opacity:.85}
+main{max-width:520px;margin:auto;padding:16px}.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px #0001}
+.seg{display:flex;gap:8px;margin-bottom:12px}.seg button{flex:1;padding:12px;border:2px solid #6c4cf1;background:#fff;color:#6c4cf1;border-radius:12px;font-size:16px}
+.seg button.on{background:#6c4cf1;color:#fff}.btn{display:block;width:100%;padding:14px;border:0;border-radius:12px;background:#6c4cf1;color:#fff;font-size:17px;margin-top:8px}
+.btn.alt{background:#e8e4ff;color:#4b34c7}#prev{display:none;width:100%;border-radius:12px;margin-top:10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.s{border-radius:12px;overflow:hidden;background:#fafafa;border:1px solid #eee}
+.s img{width:100%;display:block}.s div{padding:8px}.s b{font-size:14px}.s small{display:block;color:#666;margin-top:2px}
+#err{color:#c0262d;display:none}footer{text-align:center;color:#777;font-size:13px;padding:14px}
+</style></head><body>
+<header><h1>HairStyle AI</h1><p>Find the haircut that suits your face</p></header>
+<main>
+<div class="card">
+ <div class="seg"><button id="m" onclick="g('male')">Male</button><button id="f" class="on" onclick="g('female')">Female</button></div>
+ <input id="cam" type="file" accept="image/*" capture="user" hidden onchange="pick(this)">
+ <input id="gal" type="file" accept="image/*" hidden onchange="pick(this)">
+ <button class="btn" onclick="cam.click()">Open Camera &amp; Scan Face</button>
+ <button class="btn alt" onclick="gal.click()">Choose from Gallery</button>
+ <img id="prev" alt="your photo">
+ <p id="err"></p>
+</div>
+<div class="card" id="res" style="display:none">
+ <h2 id="shape" style="margin:0 0 4px"></h2><p id="desc" style="margin:0 0 12px;color:#555"></p>
+ <div class="grid" id="grid"></div>
+</div>
+</main>
+<footer>Developed by Moin</footer>
+<script>
+let gender='female';
+function g(v){gender=v;m.className=v=='male'?'on':'';f.className=v=='female'?'on':'';const i=cam.files[0]||gal.files[0];if(i)send(i)}
+function pick(el){const file=el.files[0];if(!file)return;prev.src=URL.createObjectURL(file);prev.style.display='block';send(file)}
+async function send(file){
+ err.style.display='none';res.style.display='none';
+ const b=document.querySelector('.btn');b.textContent='Analyzing...';
+ const fd=new FormData();fd.append('photo',file);fd.append('gender',gender);
+ try{const r=await fetch('/analyze',{method:'POST',body:fd});const j=await r.json();
+  if(!r.ok)throw new Error(j.error);
+  shape.textContent='Your face shape: '+j.shape[0].toUpperCase()+j.shape.slice(1);desc.textContent=j.desc;
+  grid.innerHTML=j.styles.map(s=>`<div class="s"><img src="${s.img}"><div><b>${s.name}</b><small>${s.tip}</small></div></div>`).join('');
+  res.style.display='block';res.scrollIntoView({behavior:'smooth'});
+ }catch(e){err.textContent=e.message||'Something went wrong.';err.style.display='block'}
+ b.textContent='Open Camera & Scan Face';
+}
+</script></body></html>
